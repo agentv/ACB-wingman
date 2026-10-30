@@ -31,16 +31,17 @@ ok()   { echo "✓  $*"; }
 warn() { echo "⚠  $*"; }
 die()  { echo "✗  $*" >&2; exit 1; }
 
-# ── 1. Copy VS Code app (if not already present) ────────────────────────────
+# ── 1. Get VS Code ───────────────────────────────────────────────────────────
 if [ -d "$PORTABLE_APP" ]; then
-  ok "Portable VS Code already present, skipping copy."
-else
+  ok "Portable VS Code already present, skipping."
+elif [ -d "$VSCODE_APP" ]; then
   log "Copying VS Code from $VSCODE_APP ..."
-  [ -d "$VSCODE_APP" ] || die "VS Code not found at $VSCODE_APP. Install it first."
   cp -R "$VSCODE_APP" "$PORTABLE_APP"
-  # Remove macOS quarantine so it opens without Gatekeeper prompts
   xattr -dr com.apple.quarantine "$PORTABLE_APP" 2>/dev/null || true
   ok "VS Code copied."
+else
+  log "VS Code not found in /Applications — running bootstrap to download it..."
+  bash "$SCRIPT_DIR/bootstrap.sh"
 fi
 
 # ── 2. Create portable data dir (activates portable mode) ───────────────────
@@ -48,26 +49,32 @@ mkdir -p "$DATA_DIR/extensions"
 mkdir -p "$DATA_DIR/user-data/User"
 ok "Portable data directory ready."
 
-# ── 3. Copy ACB extensions from local VS Code install ───────────────────────
+# ── 3. Copy ACB extensions from local VS Code install (if not already present) ─
 VSCODE_EXT_SRC="$HOME/.vscode/extensions"
-log "Copying ACB extensions from $VSCODE_EXT_SRC ..."
-copied=0
-for ext_id in "${ACB_EXTENSIONS[@]}"; do
-  # Match any platform/arch variant of this extension
-  for src in "$VSCODE_EXT_SRC"/${ext_id}-*; do
-    [ -d "$src" ] || continue
-    name="$(basename "$src")"
-    dest="$DATA_DIR/extensions/$name"
-    if [ -d "$dest" ]; then
-      warn "  Already present: $name"
-    else
-      cp -R "$src" "$dest"
-      ok "  Copied: $name"
-      ((copied++))
-    fi
+already=$(find "$DATA_DIR/extensions" -maxdepth 1 -name "salesforce.mule-dx-*" -type d | wc -l | tr -d ' ')
+if [ "$already" -gt 0 ]; then
+  ok "Extensions already present (installed by bootstrap), skipping copy."
+elif [ -d "$VSCODE_EXT_SRC" ]; then
+  log "Copying ACB extensions from $VSCODE_EXT_SRC ..."
+  copied=0
+  for ext_id in "${ACB_EXTENSIONS[@]}"; do
+    for src in "$VSCODE_EXT_SRC"/${ext_id}-*; do
+      [ -d "$src" ] || continue
+      name="$(basename "$src")"
+      dest="$DATA_DIR/extensions/$name"
+      if [ -d "$dest" ]; then
+        warn "  Already present: $name"
+      else
+        cp -R "$src" "$dest"
+        ok "  Copied: $name"
+        ((copied++))
+      fi
+    done
   done
-done
-log "Extensions copied: $copied"
+  log "Extensions copied: $copied"
+else
+  die "No extensions found in portable dir and no local VS Code extensions at $VSCODE_EXT_SRC. Run bootstrap.sh manually."
+fi
 
 # ── 4. Write baseline VS Code settings ──────────────────────────────────────
 cat > "$DATA_DIR/user-data/User/settings.json" << 'EOF'

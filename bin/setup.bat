@@ -22,22 +22,21 @@ set ACB_EXTENSIONS=salesforce.mule-dx-extension-pack salesforce.mule-dx-vscode s
 
 echo.
 
-:: ── 1. Copy VS Code (if not already present) ─────────────────────────────────
+:: ── 1. Get VS Code ───────────────────────────────────────────────────────────
 if exist "%PORTABLE_APP%\Code.exe" (
-    echo ^>  Portable VS Code already present, skipping copy.
-) else (
+    echo ^>  Portable VS Code already present, skipping.
+) else if exist "%VSCODE_SRC%\Code.exe" (
     echo ^>  Copying VS Code from %VSCODE_SRC% ...
-    if not exist "%VSCODE_SRC%\Code.exe" (
-        echo X  VS Code not found at %VSCODE_SRC%.
-        echo    Download from https://code.visualstudio.com and install, then re-run.
-        exit /b 1
-    )
     xcopy /E /I /Q /Y "%VSCODE_SRC%" "%PORTABLE_APP%" >nul
     if errorlevel 1 (
         echo X  Failed to copy VS Code.
         exit /b 1
     )
     echo V  VS Code copied.
+) else (
+    echo ^>  VS Code not found -- running bootstrap to download it...
+    call "%SCRIPT_DIR%bootstrap.bat"
+    if errorlevel 1 exit /b 1
 )
 
 :: ── 2. Create portable data dir (activates portable mode) ────────────────────
@@ -50,28 +49,38 @@ echo V  Portable data directory ready.
 if not exist "%DATA_DIR%\extensions" mkdir "%DATA_DIR%\extensions"
 if not exist "%DATA_DIR%\user-data\User" mkdir "%DATA_DIR%\user-data\User"
 
-:: ── 3. Copy ACB extensions from local VS Code install ────────────────────────
-echo ^>  Copying ACB extensions from %VSCODE_EXT_SRC% ...
-set /a COPIED=0
+:: ── 3. Copy ACB extensions from local install (if not already present) ────────
+set "PACK_FOUND=0"
+for /D %%D in ("%DATA_DIR%\extensions\salesforce.mule-dx-*") do set "PACK_FOUND=1"
 
-for %%E in (%ACB_EXTENSIONS%) do (
-    for /D %%D in ("%VSCODE_EXT_SRC%\%%E-*") do (
-        set "EXTNAME=%%~nxD"
-        set "DEST=%DATA_DIR%\extensions\!EXTNAME!"
-        if exist "!DEST!" (
-            echo ^!    Already present: !EXTNAME!
-        ) else (
-            xcopy /E /I /Q /Y "%%D" "!DEST!" >nul
-            if errorlevel 1 (
-                echo X    Failed to copy: !EXTNAME!
+if "%PACK_FOUND%"=="1" (
+    echo ^>  Extensions already present (installed by bootstrap^), skipping copy.
+) else if exist "%VSCODE_EXT_SRC%" (
+    echo ^>  Copying ACB extensions from %VSCODE_EXT_SRC% ...
+    set /a COPIED=0
+    for %%E in (%ACB_EXTENSIONS%) do (
+        for /D %%D in ("%VSCODE_EXT_SRC%\%%E-*") do (
+            set "EXTNAME=%%~nxD"
+            set "DEST=%DATA_DIR%\extensions\!EXTNAME!"
+            if exist "!DEST!" (
+                echo ^!    Already present: !EXTNAME!
             ) else (
-                echo V    Copied: !EXTNAME!
-                set /a COPIED+=1
+                xcopy /E /I /Q /Y "%%D" "!DEST!" >nul
+                if errorlevel 1 (
+                    echo X    Failed to copy: !EXTNAME!
+                ) else (
+                    echo V    Copied: !EXTNAME!
+                    set /a COPIED+=1
+                )
             )
         )
     )
+    echo ^>  Extensions copied: !COPIED!
+) else (
+    echo X  No extensions in portable dir and no local VS Code extensions found.
+    echo    Run bin\bootstrap.bat manually or install VS Code with ACB extensions first.
+    exit /b 1
 )
-echo ^>  Extensions copied: %COPIED%
 
 :: ── 4. Write baseline VS Code settings ───────────────────────────────────────
 (

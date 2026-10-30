@@ -2,6 +2,8 @@
 
 Portable Anypoint Code Builder environment for classroom use. Spins up a clean, isolated VS Code instance with the full ACB extension pack — independent of any personal VS Code installation.
 
+**No prerequisites required.** On a clean machine with no VS Code installed, `setup.sh` / `setup.bat` will download VS Code and install the ACB extensions automatically. Internet access required for a first run on a clean machine.
+
 ## How It Works
 
 VS Code's **portable mode** stores all extensions, settings, and state in a `code-portable-data` folder alongside the app. This project manages that folder so every class session starts from a known-good baseline.
@@ -9,7 +11,8 @@ VS Code's **portable mode** stores all extensions, settings, and state in a `cod
 ```
 ACB-wingman/
 ├── bin/
-│   ├── setup.sh          ← Run once (or when rebuilding from scratch)
+│   ├── setup.sh          ← Run once (downloads VS Code + ACB if needed)
+│   ├── bootstrap.sh      ← Called by setup.sh on a clean machine (macOS)
 │   ├── reset.sh          ← Run between sessions to restore clean state
 │   └── launch.sh         ← Run to open the portable ACB instance
 ├── snapshots/
