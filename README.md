@@ -2,81 +2,84 @@
 
 Portable Anypoint Code Builder environment for classroom use. Spins up a clean, isolated VS Code instance with the full ACB extension pack — independent of any personal VS Code installation.
 
-**No prerequisites required.** On a clean machine with no VS Code installed, `setup.sh` / `setup.bat` will download VS Code and install the ACB extensions automatically. Internet access required for a first run on a clean machine.
+**No prerequisites required.** `setup.sh` / `setup.bat` handles everything: if VS Code and the ACB extensions are already installed on your machine they are copied locally (fast, works offline); if not, they are downloaded automatically. Internet access is only needed on the first run of a clean machine.
 
 ## How It Works
 
-VS Code's **portable mode** stores all extensions, settings, and state in a `code-portable-data` folder alongside the app. This project manages that folder so every class session starts from a known-good baseline.
+VS Code's **portable mode** stores all extensions, settings, and state in a dedicated data folder managed by this project. Every class session can be reset to a known-good baseline in seconds.
 
 ```
 ACB-wingman/
 ├── bin/
-│   ├── setup.sh          ← Run once (downloads VS Code + ACB if needed)
-│   ├── bootstrap.sh      ← Called by setup.sh on a clean machine (macOS)
-│   ├── reset.sh          ← Run between sessions to restore clean state
-│   └── launch.sh         ← Run to open the portable ACB instance
+│   ├── setup.sh / setup.bat          ← Run once to build the environment
+│   ├── bootstrap.sh / bootstrap.bat  ← Auto-called by setup on a clean machine
+│   ├── reset.sh / reset.bat          ← Restore clean state before each session
+│   └── launch.sh / launch.bat        ← Open the portable ACB instance
 ├── snapshots/
-│   └── clean/            ← Golden copy of extensions + settings
+│   └── clean/            ← Golden copy of extensions + settings (reset source)
 ├── workspace-template/   ← Default workspace opened on launch
-├── Visual Studio Code.app  ← Portable VS Code (created by setup.sh)
+├── Visual Studio Code.app  (macOS) ─┐ Portable VS Code — created by setup,
+├── VSCode\               (Windows) ─┘ not tracked in git
 └── code-portable-data/   ← Live runtime data (extensions, settings, state)
 ```
 
 ## Quickstart
 
-### macOS — First Time
+### macOS
+
 ```bash
 chmod +x bin/*.sh
 bin/setup.sh
 ```
 
-This will:
-1. Copy VS Code from `/Applications` into this project folder
-2. Copy the ACB extensions from your local VS Code install (`~/.vscode/extensions`)
-3. Write baseline settings (telemetry off, no auto-updates)
-4. Bake a clean snapshot for resets
+Setup will:
+1. If VS Code is in `/Applications` — copy it into this project folder (offline, fast)
+2. If VS Code is not present — download and unpack it automatically
+3. If ACB extensions are in `~/.vscode/extensions` — copy them into the portable data dir
+4. If extensions are not present locally — install them via `code --install-extension` (requires internet)
+5. Write baseline settings (telemetry off, no auto-updates)
+6. Bake a clean snapshot for resets
 
-### macOS — Launch
+**Launch:**
 ```bash
 bin/launch.sh
 ```
-
-Opens the portable ACB instance at the `workspace-template` folder. Pass a path to open somewhere else:
+Opens at `workspace-template/` by default. Pass a path to open elsewhere:
 ```bash
 bin/launch.sh ~/my-mule-project
 ```
 
-### macOS — Reset (Before Each Class Session)
+**Reset before class:**
 ```bash
 bin/reset.sh
 ```
 
 ---
 
-### Windows — First Time
+### Windows
+
 ```bat
 bin\setup.bat
 ```
 
-This will:
-1. Copy VS Code from `%LOCALAPPDATA%\Programs\Microsoft VS Code` into this project folder as `VSCode\`
-2. Copy the ACB extensions from your local VS Code install (`%USERPROFILE%\.vscode\extensions`)
-3. Write baseline settings (telemetry off, no auto-updates)
-4. Bake a clean snapshot for resets
+Setup will:
+1. If VS Code is in `%LOCALAPPDATA%\Programs\Microsoft VS Code` — copy it into this project folder as `VSCode\` (offline, fast)
+2. If VS Code is not present — download the zip archive and unpack it automatically (no installer, no admin rights needed)
+3. If ACB extensions are in `%USERPROFILE%\.vscode\extensions` — copy them into the portable data dir
+4. If extensions are not present locally — install them via `code --install-extension` (requires internet)
+5. Write baseline settings (telemetry off, no auto-updates)
+6. Bake a clean snapshot for resets
 
-> **Prerequisite:** VS Code must be installed via the standard [User Installer](https://code.visualstudio.com/download) and the ACB extension pack must be installed in it before running setup.
-
-### Windows — Launch
+**Launch:**
 ```bat
 bin\launch.bat
 ```
-
 Pass a path to open a specific folder:
 ```bat
 bin\launch.bat C:\Users\me\my-mule-project
 ```
 
-### Windows — Reset (Before Each Class Session)
+**Reset before class:**
 ```bat
 bin\reset.bat
 ```
@@ -85,15 +88,21 @@ bin\reset.bat
 
 ## Updating the Baseline
 
-After you've tuned settings or pinned new extension versions:
+After tuning settings or installing updated extensions, re-bake the snapshot:
 
+**macOS:**
 ```bash
-# Manually overwrite the snapshot with current state
 cp -R code-portable-data/extensions snapshots/clean/extensions
 cp -R code-portable-data/user-data   snapshots/clean/user-data
 ```
 
-Or re-run `bin/setup.sh` after updating extensions in your main VS Code install.
+**Windows:**
+```bat
+xcopy /E /I /Y code-portable-data\extensions snapshots\clean\extensions
+xcopy /E /I /Y code-portable-data\user-data   snapshots\clean\user-data
+```
+
+Or simply re-run `bin/setup.sh` / `bin\setup.bat` after updating extensions in your main VS Code install — it will overwrite the snapshot.
 
 ## ACB Extensions Included
 
