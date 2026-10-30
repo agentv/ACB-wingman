@@ -21,7 +21,7 @@ ACB-wingman/
 
 ## Quickstart
 
-### First Time
+### macOS — First Time
 ```bash
 chmod +x bin/*.sh
 bin/setup.sh
@@ -29,11 +29,11 @@ bin/setup.sh
 
 This will:
 1. Copy VS Code from `/Applications` into this project folder
-2. Copy the ACB extensions from your local VS Code install
+2. Copy the ACB extensions from your local VS Code install (`~/.vscode/extensions`)
 3. Write baseline settings (telemetry off, no auto-updates)
 4. Bake a clean snapshot for resets
 
-### Launch
+### macOS — Launch
 ```bash
 bin/launch.sh
 ```
@@ -43,12 +43,42 @@ Opens the portable ACB instance at the `workspace-template` folder. Pass a path 
 bin/launch.sh ~/my-mule-project
 ```
 
-### Reset (Before Each Class Session)
+### macOS — Reset (Before Each Class Session)
 ```bash
 bin/reset.sh
 ```
 
-Wipes `code-portable-data` and restores from the clean snapshot. Takes seconds. Students get a fresh environment.
+---
+
+### Windows — First Time
+```bat
+bin\setup.bat
+```
+
+This will:
+1. Copy VS Code from `%LOCALAPPDATA%\Programs\Microsoft VS Code` into this project folder as `VSCode\`
+2. Copy the ACB extensions from your local VS Code install (`%USERPROFILE%\.vscode\extensions`)
+3. Write baseline settings (telemetry off, no auto-updates)
+4. Bake a clean snapshot for resets
+
+> **Prerequisite:** VS Code must be installed via the standard [User Installer](https://code.visualstudio.com/download) and the ACB extension pack must be installed in it before running setup.
+
+### Windows — Launch
+```bat
+bin\launch.bat
+```
+
+Pass a path to open a specific folder:
+```bat
+bin\launch.bat C:\Users\me\my-mule-project
+```
+
+### Windows — Reset (Before Each Class Session)
+```bat
+bin\reset.bat
+```
+
+---
 
 ## Updating the Baseline
 
