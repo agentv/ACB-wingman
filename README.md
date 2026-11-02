@@ -104,6 +104,61 @@ xcopy /E /I /Y code-portable-data\user-data   snapshots\clean\user-data
 
 Or simply re-run `bin/setup.sh` / `bin\setup.bat` after updating extensions in your main VS Code install — it will overwrite the snapshot.
 
+---
+
+## Admin Usage Guide
+
+**What it is:** A portable, self-contained Anypoint Code Builder (ACB) environment built on VS Code portable mode. Designed for classroom/lab use — isolated from any personal VS Code install, resettable to a clean baseline in seconds.
+
+### Getting Started on a New Machine
+
+**1. Clone the repo**
+```bash
+git clone https://github.com/agentv/ACB-wingman.git
+cd ACB-wingman
+```
+
+**2. Run setup (once)**
+
+macOS:
+```bash
+chmod +x bin/*.sh
+bin/setup.sh
+```
+Windows:
+```bat
+bin\setup.bat
+```
+
+Setup is fully automatic. It detects whether VS Code and ACB extensions are already installed locally (fast, offline copy) or downloads them if not (internet required on first run only).
+
+### Daily / Per-Session Workflow
+
+| Task | macOS | Windows |
+|---|---|---|
+| Reset to clean state before class | `bin/reset.sh` | `bin\reset.bat` |
+| Launch ACB | `bin/launch.sh` | `bin\launch.bat` |
+| Open a specific project | `bin/launch.sh ~/path/to/project` | `bin\launch.bat C:\path\to\project` |
+
+### Updating the Baseline
+
+After tweaking settings or updating extensions, re-bake the snapshot so future resets use the new baseline:
+
+```bash
+bin/setup.sh   # re-run setup after updating your main VS Code install
+```
+
+Or manually copy `code-portable-data/extensions` and `code-portable-data/user-data` into `snapshots/clean/`.
+
+### Key Points for Admins
+
+- **No admin rights needed** — VS Code runs fully portable, no installer
+- **No internet after first setup** — everything is local once bootstrapped
+- **Resets are instant** — `reset.sh` / `reset.bat` restores from the `snapshots/clean/` golden copy
+- **No impact on personal VS Code** — completely isolated data directory
+
+---
+
 ## ACB Extensions Included
 
 | Extension | Version |
